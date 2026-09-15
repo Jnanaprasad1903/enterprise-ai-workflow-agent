@@ -1,3 +1,6 @@
+# Private / Local-only files (never push to GitHub)
+INTERVIEW_GUIDE.md
+
 # Virtual Environment
 venv/
 .venv/

@@ -21,8 +21,7 @@ This file tracks the real-time engineering decisions, stage completions, git com
 | **Step 4** | RAG Pipeline (ChromaDB + Policies) | 🟢 Completed | `5800692` | 4 policy docs, semantic section chunking, `rag_tool.py`, ChromaDB tests |
 | **Step 5** | Tool Registry & Gemini Agent | 🟢 Completed | `c42f341` | `tools.py` registry, `workflow_agent.py`, agent tests (22/22 passing) |
 | **Step 6** | n8n Workflow Integration | 🟢 Completed | Pending Push | `workflow.json` 4-node pipeline, `n8n/README.md` import guide |
-| **Step 7** | Scenario Testing & Verification | 🟢 Completed | Pending Push | All 3 interview scenarios passing (22/22 tests, `run_scenarios.py` verified) |
-| **Step 8** | README & Interview Defense Guide | 🟡 Up Next | — | Architecture diagrams, code walkthrough, Q&A defense |
+| **Step 7** | Scenario Testing & Verification | 🟢 Completed | `b5dfc5b` | All 3 interview scenarios passing (22/22 tests, `run_scenarios.py` verified) |
 
 ---
 
