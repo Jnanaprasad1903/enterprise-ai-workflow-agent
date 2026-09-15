@@ -42,6 +42,16 @@ class QueryResponse(BaseModel):
     rows_count: int
     results: List[Dict[str, Any]]
 
+class AgentQueryRequest(BaseModel):
+    query: str = Field(..., description="Natural language question for the AI Agent")
+
+class AgentQueryResponse(BaseModel):
+    query: str
+    answer: str
+    tools_used: List[str]
+    execution_trace: List[Dict[str, Any]]
+    status: str
+
 # -------------------------------------------------------------
 # API Endpoints
 # -------------------------------------------------------------
@@ -150,3 +160,15 @@ def execute_sql(payload: QueryRequest):
 def get_schema():
     """Returns database schema for tool callers or external orchestration."""
     return {"schema": describe_database()}
+
+@router.post("/agent/query", response_model=AgentQueryResponse, tags=["AI Agent"])
+def run_agent_query(payload: AgentQueryRequest):
+    """
+    Executes the Enterprise AI Workflow Agent.
+    Orchestrates Gemini Tool Calling over SQL, RAG, and REST services.
+    Can be invoked directly from n8n Webhook / HTTP Request nodes.
+    """
+    from src.agent.workflow_agent import EnterpriseWorkflowAgent
+    agent = EnterpriseWorkflowAgent()
+    return agent.run(payload.query)
+

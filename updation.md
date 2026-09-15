@@ -19,9 +19,9 @@ This file tracks the real-time engineering decisions, stage completions, git com
 | **Step 1** | Project Structure & Setup | 🟢 Completed | `791f0c8` | Scaffold, `.gitignore`, `requirements.txt`, `.env.example`, `config.py` |
 | **Step 2** | SQLite Database & Business Data | 🟢 Completed | `45d1080` | `schema.sql`, realistic seed data, `sql_tool.py`, SQL tests (5/5 passing) |
 | **Step 3** | FastAPI REST Services | 🟢 Completed | `64e422e` | Product/Order endpoints, returns analytics, Swagger docs, API tests |
-| **Step 4** | RAG Pipeline (ChromaDB + Policies) | 🟢 Completed | Pending Push | 4 policy docs, semantic section chunking, `rag_tool.py`, ChromaDB tests (18/18 suite passing) |
-| **Step 5** | Tool Registry & Gemini Agent | 🟡 Up Next | — | Gemini Function Calling schemas, multi-tool loop, synthesis engine |
-| **Step 6** | n8n Workflow Integration | ⚪ Pending | — | `workflow.json`, webhook trigger, HTTP node chaining |
+| **Step 4** | RAG Pipeline (ChromaDB + Policies) | 🟢 Completed | `5800692` | 4 policy docs, semantic section chunking, `rag_tool.py`, ChromaDB tests |
+| **Step 5** | Tool Registry & Gemini Agent | 🟢 Completed | Pending Push | `tools.py` registry, `workflow_agent.py` multi-turn loop, agent tests (22/22 suite passing) |
+| **Step 6** | n8n Workflow Integration | 🟡 Up Next | — | `workflow.json`, webhook trigger, HTTP node chaining |
 | **Step 7** | Scenario Testing & Verification | ⚪ Pending | — | 3 core interview queries tested end-to-end |
 | **Step 8** | README & Interview Defense Guide | ⚪ Pending | — | Architecture diagrams, code walkthrough, Q&A defense |
 
@@ -88,4 +88,19 @@ This file tracks the real-time engineering decisions, stage completions, git com
   - Created automated test suite `tests/test_rag_tool.py` verifying semantic chunk retrieval for Scenario 2 queries (18/18 total tests passing).
 - **Engineering Decision & Rationale:**
   - *Why use section-based chunking over raw character chunking?* Character/token chunking often splits critical policy sentences down the middle (e.g. separating the restocking fee amount from the waiver condition). Section-based chunking preserves the semantic context of legal and operational clauses.
-- **Git Commit:** `feat: step 4 - rag pipeline with chromadb and policy knowledge base`
+- **Git Commit:** `feat: step 4 - rag pipeline with chromadb and policy knowledge base` (`5800692`)
+
+### 🔹 Stage 5: Unified Tool Registry & Gemini Agent Brain
+- **Date:** September 15, 2026
+- **Actions Taken:**
+  - Implemented `src/agent/tools.py` with type-annotated callables and docstrings compatible with Google GenAI Function Calling schemas (`query_database`, `describe_database`, `search_policy_documents`, `get_product_details`, `get_order_details`, `get_returns_summary_tool`).
+  - Implemented `src/agent/workflow_agent.py`:
+    - Leverages modern `google.genai` SDK (`genai.Client`).
+    - Configured system instructions with strict anti-hallucination constraints on mathematical business metrics.
+    - Multi-turn tool execution loop: executes requested function calls, feeds tool response payloads back to Gemini, and iterates until synthesis is complete.
+    - Includes deterministic offline fallback mode allowing 100% test verification and demo execution even before setting API keys.
+  - Exposed `POST /api/v1/agent/query` in FastAPI for n8n webhook or HTTP client execution.
+  - Built automated test suite `tests/test_agent.py` covering Scenario 1 (SQL revenue), Scenario 2 (RAG return policy), Scenario 3 (Multi-Source SQL + RAG synthesis), and the FastAPI agent route (22/22 tests passing across whole repo).
+- **Engineering Decision & Rationale:**
+  - *Why support automated function calling loop instead of a single-shot prompt?* In real-world enterprise queries (such as Scenario 3), the agent cannot answer the second half ("what is the return policy for that category?") until it executes the SQL query to discover what that category actually is (`Smart Watch Active` -> `Electronics`). The agentic loop enables true dynamic multi-hop reasoning.
+- **Git Commit:** `feat: step 5 - gemini function calling agent and multi-source reasoning`
