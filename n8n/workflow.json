@@ -1,0 +1,118 @@
+{
+  "name": "Enterprise AI Workflow Agent Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "enterprise-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1e7a4b82-6294-4d8b-9d41-381a17fa6b51",
+      "name": "Webhook Trigger (User Query)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "enterprise-agent-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/agent/query",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $json.body.query || $json.query || 'Which product had the highest returns, and what does our return policy say?' }}\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "8f3b2c19-74d1-4e92-a1f0-28b945c71a34",
+      "name": "HTTP Request (FastAPI Agent)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format response payload for enterprise channels (Slack/Teams/Web)\nconst agentOutput = $input.first().json;\n\nreturn [{\n  json: {\n    status: agentOutput.status,\n    original_query: agentOutput.query,\n    answer: agentOutput.answer,\n    tools_invoked: agentOutput.tools_used,\n    tools_count: agentOutput.tools_used ? agentOutput.tools_used.length : 0,\n    execution_trace: agentOutput.execution_trace,\n    timestamp: new Date().toISOString(),\n    orchestrator: \"n8n Enterprise Workflow Orchestrator v1.0\"\n  }\n}];"
+      },
+      "id": "4a9d7e31-1823-45ab-88fa-0129c7b41e89",
+      "name": "Format Business Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "5c8f2a14-93b5-47dc-a021-482c39e17b62",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger (User Query)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (FastAPI Agent)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (FastAPI Agent)": {
+      "main": [
+        [
+          {
+            "node": "Format Business Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Business Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

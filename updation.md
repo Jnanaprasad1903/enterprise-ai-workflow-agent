@@ -20,10 +20,10 @@ This file tracks the real-time engineering decisions, stage completions, git com
 | **Step 2** | SQLite Database & Business Data | 🟢 Completed | `45d1080` | `schema.sql`, realistic seed data, `sql_tool.py`, SQL tests (5/5 passing) |
 | **Step 3** | FastAPI REST Services | 🟢 Completed | `64e422e` | Product/Order endpoints, returns analytics, Swagger docs, API tests |
 | **Step 4** | RAG Pipeline (ChromaDB + Policies) | 🟢 Completed | `5800692` | 4 policy docs, semantic section chunking, `rag_tool.py`, ChromaDB tests |
-| **Step 5** | Tool Registry & Gemini Agent | 🟢 Completed | Pending Push | `tools.py` registry, `workflow_agent.py` multi-turn loop, agent tests (22/22 suite passing) |
-| **Step 6** | n8n Workflow Integration | 🟡 Up Next | — | `workflow.json`, webhook trigger, HTTP node chaining |
-| **Step 7** | Scenario Testing & Verification | ⚪ Pending | — | 3 core interview queries tested end-to-end |
-| **Step 8** | README & Interview Defense Guide | ⚪ Pending | — | Architecture diagrams, code walkthrough, Q&A defense |
+| **Step 5** | Tool Registry & Gemini Agent | 🟢 Completed | `c42f341` | `tools.py` registry, `workflow_agent.py`, agent tests (22/22 passing) |
+| **Step 6** | n8n Workflow Integration | 🟢 Completed | Pending Push | `workflow.json` 4-node pipeline, `n8n/README.md` import guide |
+| **Step 7** | Scenario Testing & Verification | 🟢 Completed | Pending Push | All 3 interview scenarios passing (22/22 tests, `run_scenarios.py` verified) |
+| **Step 8** | README & Interview Defense Guide | 🟡 Up Next | — | Architecture diagrams, code walkthrough, Q&A defense |
 
 ---
 
@@ -103,4 +103,31 @@ This file tracks the real-time engineering decisions, stage completions, git com
   - Built automated test suite `tests/test_agent.py` covering Scenario 1 (SQL revenue), Scenario 2 (RAG return policy), Scenario 3 (Multi-Source SQL + RAG synthesis), and the FastAPI agent route (22/22 tests passing across whole repo).
 - **Engineering Decision & Rationale:**
   - *Why support automated function calling loop instead of a single-shot prompt?* In real-world enterprise queries (such as Scenario 3), the agent cannot answer the second half ("what is the return policy for that category?") until it executes the SQL query to discover what that category actually is (`Smart Watch Active` -> `Electronics`). The agentic loop enables true dynamic multi-hop reasoning.
-- **Git Commit:** `feat: step 5 - gemini function calling agent and multi-source reasoning`
+- **Git Commit:** `feat: step 5 - gemini function calling agent and multi-source reasoning` (`c42f341`)
+
+### 🔹 Stage 6: n8n Workflow Orchestration Integration
+- **Date:** September 15, 2026
+- **Actions Taken:**
+  - Created `n8n/workflow.json`: A ready-to-import 4-node n8n workflow:
+    1. **Webhook Trigger Node**: Listens at `POST /webhook/enterprise-agent`.
+    2. **HTTP Request Node**: Routes query to `POST http://localhost:8000/api/v1/agent/query`.
+    3. **Code Node (JavaScript)**: Enriches agent response with metadata and ISO timestamp.
+    4. **Respond to Webhook Node**: Returns the formatted JSON answer to the caller.
+  - Updated `n8n/README.md` with curl test examples and a verbatim interview explanation of n8n's enterprise role.
+- **Engineering Decision & Rationale:**
+  - *Why n8n over custom webhook code?* n8n provides visual workflow management, built-in retry logic, audit logging, and zero-code channel integrations (Slack, Teams, Email), while keeping full Python control over agent logic.
+- **Git Commit:** `feat: step 6 and 7 - n8n workflow, scenario runner, final integration`
+
+### 🔹 Stage 7: End-to-End Scenario Testing & Verification
+- **Date:** September 15, 2026
+- **Verified Scenarios (all 3 passing):**
+
+| # | Query | Tools Called | Verified Output |
+| :--- | :--- | :--- | :--- |
+| 1 | "Which product generated the highest revenue?" | `query_database` | Laptop Pro 16 — $450,000 |
+| 2 | "What is our return policy on opened electronics?" | `search_policy_documents` | 14-day window, fee waived for defects |
+| 3 | "Which product had highest returns + return policy?" | `query_database` + `search_policy_documents` | Smart Watch Active (5 returns) + Full defect refund entitlement |
+
+- **Test Coverage:** 22/22 automated pytest tests passing across all modules.
+- **`tests/run_scenarios.py`** produces clean, timestamped, interview-ready output.
+- **Git Commit:** `feat: step 6 and 7 - n8n workflow, scenario runner, final integration`
