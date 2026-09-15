@@ -162,14 +162,3 @@ python tests/run_scenarios.py
 ```
 
 ---
-
-## 🎤 Interview Talking Points ("How to Explain This Project")
-
-1. **Why Tool Calling over Pure Prompting?**
-   > *"Pure prompting causes arithmetic hallucinations when calculating business metrics. By integrating a deterministic SQL tool, the LLM generates the query, SQLite computes the exact revenue/return count, and the LLM merely interprets the ground-truth table."*
-
-2. **Why Hybrid Structured + Unstructured (RAG)?**
-   > *"Real enterprise problems rarely live in a single silo. A manager asking about defective return rates needs both the quantitative return numbers from the ERP database and the qualitative clauses from the legal/warranty policy."*
-
-3. **What Role Does n8n Play?**
-   > *"n8n acts as the production orchestrator. Instead of hardcoding ingress hooks, n8n handles the incoming webhook, user authentication, routing to our FastAPI agent service, and forwarding responses to Slack, Microsoft Teams, or email."*
