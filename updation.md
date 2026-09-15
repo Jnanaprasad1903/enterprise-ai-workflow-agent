@@ -17,9 +17,9 @@ This file tracks the real-time engineering decisions, stage completions, git com
 | Step | Milestone | Status | Git Commit | Key Deliverables |
 | :--- | :--- | :---: | :---: | :--- |
 | **Step 1** | Project Structure & Setup | 🟢 Completed | `791f0c8` | Scaffold, `.gitignore`, `requirements.txt`, `.env.example`, `config.py` |
-| **Step 2** | SQLite Database & Business Data | 🟢 Completed | Pending Push | `schema.sql`, realistic seed data, `sql_tool.py`, SQL tests (5/5 passing) |
-| **Step 3** | FastAPI REST Services | 🟡 Up Next | — | Product/Order endpoints, healthcheck, Swagger docs |
-| **Step 4** | RAG Pipeline (ChromaDB + Policies) | ⚪ Pending | — | 4 policy docs, chunking/indexing, `rag_tool.py`, semantic retrieval tests |
+| **Step 2** | SQLite Database & Business Data | 🟢 Completed | `45d1080` | `schema.sql`, realistic seed data, `sql_tool.py`, SQL tests (5/5 passing) |
+| **Step 3** | FastAPI REST Services | 🟢 Completed | Pending Push | Product/Order endpoints, returns analytics, Swagger docs, API tests (14/14 passing) |
+| **Step 4** | RAG Pipeline (ChromaDB + Policies) | 🟡 Up Next | — | 4 policy docs, chunking/indexing, `rag_tool.py`, semantic retrieval tests |
 | **Step 5** | Tool Registry & Gemini Agent | ⚪ Pending | — | Gemini Function Calling schemas, multi-tool loop, synthesis engine |
 | **Step 6** | n8n Workflow Integration | ⚪ Pending | — | `workflow.json`, webhook trigger, HTTP node chaining |
 | **Step 7** | Scenario Testing & Verification | ⚪ Pending | — | 3 core interview queries tested end-to-end |
@@ -55,4 +55,21 @@ This file tracks the real-time engineering decisions, stage completions, git com
   - Created automated test suite `tests/test_sql_tool.py` testing revenue calculations, return counts, schema inspection, and SQL injection blocking (5/5 tests passing).
 - **Engineering Decision & Rationale:**
   - *Why enforce read-only execution at the Python layer rather than relying on LLM prompting alone?* LLM system prompts can be jailbroken or hallucinate write operations. Enforcing `SELECT`/`WITH` token validation and SQLite transaction boundaries at the code level guarantees deterministic safety.
-- **Git Commit:** `feat: step 2 - sqlite schema, seed data, and sql query tool`
+- **Git Commit:** `feat: step 2 - sqlite schema, seed data, and sql query tool` (`45d1080`)
+
+### 🔹 Stage 3: FastAPI REST Service & API Tool Endpoints
+- **Date:** September 15, 2026
+- **Actions Taken:**
+  - Implemented `src/api/routes.py` with typed Pydantic models and REST endpoints:
+    - `GET /api/v1/health`: System & database connectivity check.
+    - `GET /api/v1/products`: Filterable catalog search.
+    - `GET /api/v1/products/{product_id}`: Granular SKU data (price, stock, warranty months).
+    - `GET /api/v1/orders/{order_id}`: Joined customer & product order details.
+    - `GET /api/v1/returns/summary`: Aggregated return metrics.
+    - `POST /api/v1/database/query`: Safe read-only SQL execution endpoint for HTTP callers/n8n.
+    - `GET /api/v1/database/schema`: DDL inspection endpoint.
+  - Implemented `src/api/main.py` using modern FastAPI `lifespan` context manager, interactive Swagger UI (`/docs`), and CORS middleware.
+  - Created automated test suite `tests/test_api.py` verifying all endpoints with `TestClient` (14/14 tests passing across the suite).
+- **Engineering Decision & Rationale:**
+  - *Why expose both REST endpoints and direct SQL execution?* In an enterprise architecture, external workflows (such as n8n or third-party webhooks) often need standard REST endpoints (`/orders/{id}`) for point-lookups, while the AI Agent needs dynamic SQL execution for flexible cross-table analytics. Providing both maximizes interoperability.
+- **Git Commit:** `feat: step 3 - fastapi rest services and test suite`
