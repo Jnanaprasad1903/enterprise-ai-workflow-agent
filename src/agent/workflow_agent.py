@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from typing import Dict, Any, List, Optional
 from src.config import GEMINI_API_KEY, GEMINI_MODEL
 from src.agent.tools import TOOL_FUNCTIONS, TOOL_MAP
@@ -22,6 +23,8 @@ CRITICAL RULES:
 """
 
 class EnterpriseWorkflowAgent:
+    MAX_TRANSIENT_RETRIES = 2
+
     def __init__(self, api_key: Optional[str] = None, model_name: Optional[str] = None):
         self.api_key = api_key or GEMINI_API_KEY
         self.model_name = model_name or GEMINI_MODEL
@@ -61,7 +64,7 @@ class EnterpriseWorkflowAgent:
             )
 
             # Initial user prompt
-            response = chat.send_message(user_query)
+            response = self._send_message_with_retry(chat, user_query)
             turns = 0
             max_turns = 5
 
@@ -96,7 +99,7 @@ class EnterpriseWorkflowAgent:
                     )
 
                 # Send tool execution results back to Gemini
-                response = chat.send_message(tool_responses)
+                response = self._send_message_with_retry(chat, tool_responses)
 
             final_answer = response.text if response.text else "Unable to formulate answer."
             
@@ -109,6 +112,15 @@ class EnterpriseWorkflowAgent:
             }
 
         except Exception as e:
+            if self._is_transient_service_error(e):
+                fallback = self._mock_or_offline_fallback(user_query)
+                fallback["mode"] = "transient_service_fallback"
+                fallback["answer"] = (
+                    "Gemini is temporarily unavailable, so I answered using the "
+                    "local read-only data and policy tools.\n\n"
+                    + fallback["answer"]
+                )
+                return fallback
             return {
                 "query": user_query,
                 "answer": f"Agent Execution Error: {str(e)}",
@@ -116,6 +128,20 @@ class EnterpriseWorkflowAgent:
                 "execution_trace": trace_log,
                 "status": "error"
             }
+
+    def _send_message_with_retry(self, chat, message):
+        for attempt in range(self.MAX_TRANSIENT_RETRIES + 1):
+            try:
+                return chat.send_message(message)
+            except Exception as error:
+                if not self._is_transient_service_error(error) or attempt == self.MAX_TRANSIENT_RETRIES:
+                    raise
+                time.sleep(2 ** attempt)
+
+    @staticmethod
+    def _is_transient_service_error(error: Exception) -> bool:
+        message = str(error).upper()
+        return "503" in message or "UNAVAILABLE" in message or "RESOURCE_EXHAUSTED" in message
 
     def _mock_or_offline_fallback(self, query: str) -> Dict[str, Any]:
         """
@@ -127,7 +153,7 @@ class EnterpriseWorkflowAgent:
         tools_used = []
         trace = []
         
-        needs_sql = any(k in q_lower for k in ["revenue", "highest return", "most return", "sales", "sold", "order", "price"])
+        needs_sql = any(k in q_lower for k in ["revenue", "grossed", "highest return", "most return", "sales", "sold", "order", "price"])
         needs_rag = any(k in q_lower for k in ["policy", "return policy", "warranty", "sla", "shipping", "restocking"])
 
         sql_result = ""
@@ -135,7 +161,7 @@ class EnterpriseWorkflowAgent:
 
         # 1. SQL Routing
         if needs_sql:
-            if "revenue" in q_lower:
+            if "revenue" in q_lower or "grossed" in q_lower:
                 tools_used.append("query_database")
                 sql = "SELECT p.name, SUM(s.total_amount) AS total_revenue FROM sales s JOIN products p ON s.product_id = p.product_id GROUP BY p.name ORDER BY total_revenue DESC LIMIT 1;"
                 sql_result = TOOL_MAP["query_database"](sql_query=sql)
