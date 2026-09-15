@@ -8,7 +8,6 @@ This file tracks the real-time engineering decisions, stage completions, git com
 - **Project Name:** Enterprise AI Workflow Agent
 - **Core Architecture:** Intent Understanding → Dynamic Multi-Tool Routing (SQL + RAG + REST API) → Result Synthesis → n8n Orchestration
 - **Tech Stack:** Python 3.10+, FastAPI, SQLite, ChromaDB, Google Gemini API (Function Calling), n8n, Pytest.
-- **Rule of Thumb:** *Build first, claim later.* Every claimed capability has real, runnable code, automated tests, and git commit history.
 
 ---
 
