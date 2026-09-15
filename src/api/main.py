@@ -1,4 +1,9 @@
 from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from src.config import DATABASE_PATH
+from src.database.seed_data import seed_database
+from src.api.routes import router as api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -18,9 +18,9 @@ This file tracks the real-time engineering decisions, stage completions, git com
 | :--- | :--- | :---: | :---: | :--- |
 | **Step 1** | Project Structure & Setup | 🟢 Completed | `791f0c8` | Scaffold, `.gitignore`, `requirements.txt`, `.env.example`, `config.py` |
 | **Step 2** | SQLite Database & Business Data | 🟢 Completed | `45d1080` | `schema.sql`, realistic seed data, `sql_tool.py`, SQL tests (5/5 passing) |
-| **Step 3** | FastAPI REST Services | 🟢 Completed | Pending Push | Product/Order endpoints, returns analytics, Swagger docs, API tests (14/14 passing) |
-| **Step 4** | RAG Pipeline (ChromaDB + Policies) | 🟡 Up Next | — | 4 policy docs, chunking/indexing, `rag_tool.py`, semantic retrieval tests |
-| **Step 5** | Tool Registry & Gemini Agent | ⚪ Pending | — | Gemini Function Calling schemas, multi-tool loop, synthesis engine |
+| **Step 3** | FastAPI REST Services | 🟢 Completed | `64e422e` | Product/Order endpoints, returns analytics, Swagger docs, API tests |
+| **Step 4** | RAG Pipeline (ChromaDB + Policies) | 🟢 Completed | Pending Push | 4 policy docs, semantic section chunking, `rag_tool.py`, ChromaDB tests (18/18 suite passing) |
+| **Step 5** | Tool Registry & Gemini Agent | 🟡 Up Next | — | Gemini Function Calling schemas, multi-tool loop, synthesis engine |
 | **Step 6** | n8n Workflow Integration | ⚪ Pending | — | `workflow.json`, webhook trigger, HTTP node chaining |
 | **Step 7** | Scenario Testing & Verification | ⚪ Pending | — | 3 core interview queries tested end-to-end |
 | **Step 8** | README & Interview Defense Guide | ⚪ Pending | — | Architecture diagrams, code walkthrough, Q&A defense |
@@ -72,4 +72,20 @@ This file tracks the real-time engineering decisions, stage completions, git com
   - Created automated test suite `tests/test_api.py` verifying all endpoints with `TestClient` (14/14 tests passing across the suite).
 - **Engineering Decision & Rationale:**
   - *Why expose both REST endpoints and direct SQL execution?* In an enterprise architecture, external workflows (such as n8n or third-party webhooks) often need standard REST endpoints (`/orders/{id}`) for point-lookups, while the AI Agent needs dynamic SQL execution for flexible cross-table analytics. Providing both maximizes interoperability.
-- **Git Commit:** `feat: step 3 - fastapi rest services and test suite`
+- **Git Commit:** `feat: step 3 - fastapi rest services and test suite` (`64e422e`)
+
+### 🔹 Stage 4: RAG Pipeline (ChromaDB + Unstructured Policy Documents)
+- **Date:** September 15, 2026
+- **Actions Taken:**
+  - Authored 4 comprehensive corporate policy documents under `data/docs/`:
+    - `return_policy.md`: Outlines the 14-day window for opened electronics and the 15% restocking fee waiver for verified hardware defects.
+    - `shipping_policy.md`: Outlines transit tiers, threshold for free shipping, and 48-hour damaged transit claim window.
+    - `warranty_policy.md`: Covers manufacturer warranty coverage (12-60 months), battery degradation rules, and claim RMA processes.
+    - `customer_support_sla.md`: Outlines response SLAs for VIP (2h) vs Standard (24h) and recurring defect escalation thresholds.
+  - Implemented `src/rag/vector_store.py` initializing a persistent ChromaDB client with cosine similarity (`hnsw:space: cosine`).
+  - Implemented `src/rag/indexer.py` with section-aware markdown chunking that retains parent document and section headings in each vector payload.
+  - Implemented `src/rag/rag_tool.py` providing `search_policy_documents(query, top_k)` with distance scoring, markdown formatting, and source file citations.
+  - Created automated test suite `tests/test_rag_tool.py` verifying semantic chunk retrieval for Scenario 2 queries (18/18 total tests passing).
+- **Engineering Decision & Rationale:**
+  - *Why use section-based chunking over raw character chunking?* Character/token chunking often splits critical policy sentences down the middle (e.g. separating the restocking fee amount from the waiver condition). Section-based chunking preserves the semantic context of legal and operational clauses.
+- **Git Commit:** `feat: step 4 - rag pipeline with chromadb and policy knowledge base`
