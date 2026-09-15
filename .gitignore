@@ -13,7 +13,10 @@ __pycache__/
 .env
 
 # Vector Store / Local DB
+data/*.db
+data/*.sqlite
 chroma_db/
+data/chroma_db/
 *.sqlite3-journal
 
 # Testing & Cache
